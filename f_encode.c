@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "f_encode.h"
 
 /*
@@ -40,3 +41,24 @@ int cacheunoctet( unsigned char** img, unsigned char b,int k, char bitParPixel)
 }
 
 
+/*
+Cache le contenu du fichier de nom fileName dans l’image img,
+à raison de bitParPixel bits de poids faible par pixels.
+Cette fonction commence par cacher le nom et la taille du fichier à cacher,
+puis lit le contenu du fichier octet par octet et cache ce contenu
+PARAMETRES :
+fic: nom du fichier contenant le message à cacher
+img : l’image dans laquelle cacher le fichier.
+b : l’octet à cacher, à raison de bitParPixel bits par pixel.
+bitParPixel : nombre de bits de poids faible utilisé
+*
+nl : nombre de lignes de l’image
+*
+nc : nombre de colonnes de l’image
+* RETOUR : 0 en l’absence d’erreur, un nombre non nul en cas d’erreur.
+*/
+
+int imencode(char *fic, unsigned char**img, char bitParPixel, int nl, int nc)
+{
+    
+}
