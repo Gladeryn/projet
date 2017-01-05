@@ -5,7 +5,7 @@ CFLAGS=-g -I$(DIRSDL)/include -I$(DIRSDL)/include/SDL -I/usr/local/include -I/us
 LDFLAGS= -L$(DIRSDL)/lib -L/usr/local/lib -lSDL -lSDL_ttf -lSDL_image -lSDL_draw -lSDL_phelma -lSDL_sound -lX11 -lm
 
 #exemple : exemple.o
-steganographie : steganographie.o
+steganographie : f_encode.o steganographie.o
 	gcc -o $@ $^ $(LDFLAGS)
 
 %.o : %.c
