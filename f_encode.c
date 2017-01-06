@@ -19,7 +19,7 @@ k : indice du pixel ou on commence à cacher l’octet.
 Avec 2 bits par pixel, c’est k+4.
 */
 
-int cacheunoctet( unsigned char* img, unsigned char b,int k, char bitParPixel) 
+int cacheunoctet( unsigned char** img, unsigned char b,int k, char bitParPixel) 
 {
     int i;    
     int n = bitParPixel;
@@ -34,9 +34,9 @@ int cacheunoctet( unsigned char* img, unsigned char b,int k, char bitParPixel)
     while(-i+8./n>0)
     {
         if(8-n*(i+1)<0)
-            img[k]=(img[k] & (~bitParPixel)) ^ ((b <<(-8+n*(i+1)))&bitParPixel);
+            *(*img+k)=(*(*img+k) & (~bitParPixel)) ^ ((b <<(-8+n*(i+1)))&bitParPixel);
         else
-            img[k]=(img[k] & (~bitParPixel)) ^ ((b >>(8-n*(i+1)))&bitParPixel);
+            *(*img+k)=(*(*img+k)& (~bitParPixel)) ^ ((b >>(8-n*(i+1)))&bitParPixel);
         k+=1;
         i++;
     }
@@ -64,10 +64,9 @@ void test_cacheunoctet()
     unsigned char b = 0b10101101;
     int k=0;
     int testok = 1;
-    printf("\n\n");
     printf("==========Test fonction cacheunoctet de f_encode.c========== \n");
     char bitParPixel = 3;
-    k = cacheunoctet(image_test,b,k,bitParPixel);
+    k = cacheunoctet(&image_test,b,k,bitParPixel);
     if(k!=3)
     {
         testok=0;
@@ -108,7 +107,6 @@ void test_cacheunoctet()
         printf("==============f_encode.c : cacheunoctet [OK]================\n");
     else
         printf("==============[ERREUR] f_encode.c : cacheunoctet================\n");
-    printf("\n");
 }
 
 /*
