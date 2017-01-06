@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "f_encode.h"
 
 /*
@@ -117,16 +118,70 @@ puis lit le contenu du fichier octet par octet et cache ce contenu
 PARAMETRES :
 fic: nom du fichier contenant le message à cacher
 img : l’image dans laquelle cacher le fichier.
-b : l’octet à cacher, à raison de bitParPixel bits par pixel.
 bitParPixel : nombre de bits de poids faible utilisé
 *
 nl : nombre de lignes de l’image
 *
 nc : nombre de colonnes de l’image
 * RETOUR : 0 en l’absence d’erreur, un nombre non nul en cas d’erreur.
+
+
+Information a cacher :
+12 caracteres contenant le nom du fichier caché
+4 octets contenant le nombre d'octets du fichier caché
+Le message (contenu du fichier)
 */
 
 int imencode(char *fic, unsigned char**img, char bitParPixel, int nl, int nc)
 {
+    FILE* fichier = NULL;
+    unsigned long taille;
+    if((fichier=fopen(fic,"rb"))==NULL)
+    {
+        printf("Erreur ouverture fichier\n");
+        return -1;
+    }
     
+    fseek(fichier,0,SEEK_END); //on se place à la fin du fichier
+    taille = ftell(fichier); // on lit la position du curseur placé à la fin du fichier, c'est sa taille en octets
+    taille = taille + 12 + 4; // la taille totale à cacher en octets
+    
+    if(taille/((float)bitParPixel) > taille/bitParPixel) // taille devient la taille nécessaire en pixel
+        taille = taille/bitParPixel +1;
+    else
+        taille /=bitParPixel;
+    
+    if(taille>nl*nc)
+    {
+        printf("Image trop petite\n");
+        return -1;
+    }
+    
+    // encodage du nom du fichier
+    int i;
+    int k = 0; // indice du pixel à inscrire
+    if(strlen(fic)+1>12)
+    {
+        printf("titre fichier trop long\n");
+        return -1;
+    }
+    
+    for(i=0;i<strlen(fic);i++)
+    {
+         cacheunoctet(img,(unsigned char)fic[i],k,bitParPixel);
+         k++;
+    }
+    cacheunoctet(img,(unsigned char)('\0'),k,bitParPixel); 
+    k=11; //les 12 premiers pixels sont reservés au titre du fichier
+    
+    unsigned int len_message = ftell(fichier);
+    if(len_message>=4294967296) // valeur maximale codée sur 32 bits (il faudrait déja un fichier de plus de 4GiO donc une image d'au moins cette taille). Le = sert a considerer le message comme trop long si est d'exactement la valeur maximale possible, car de toute manière un unsigned int ne peut pas prendre de valeur plus grande. On s'assure ainsi qu'aucune information incomplète ne puisse etre encodée dans l'image. Sinon il faudrait prendre des uint64. 
+    {
+        printf("Taille message trop grande ou image trop petite\n");
+        return-1;
+    }
+    
+    // a continuer : Encoder taille message et message
+    
+    fclose(fichier);
 }
