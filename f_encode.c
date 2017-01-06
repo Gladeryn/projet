@@ -19,7 +19,7 @@ k : indice du pixel ou on commence à cacher l’octet.
 Avec 2 bits par pixel, c’est k+4.
 */
 
-int cacheunoctet( unsigned char** img, unsigned char b,int k, char bitParPixel) 
+int cacheunoctet( unsigned char* img, unsigned char b,int k, char bitParPixel) 
 {
     int i;    
     int n = bitParPixel;
@@ -31,12 +31,12 @@ int cacheunoctet( unsigned char** img, unsigned char b,int k, char bitParPixel)
         bit <<=1;
     }
     i=0;
-    while(i-8./n>0)
+    while(-i+8./n>0)
     {
-        if((b >>(8-n*(i+1)<0):
-            img[k]=(img[k] & (!bitParPixel)) ^ ((b <<(-8+n*(i+1)))&bitParPixel);
+        if(8-n*(i+1)<0)
+            img[k]=(img[k] & (~bitParPixel)) ^ ((b <<(-8+n*(i+1)))&bitParPixel);
         else
-            img[k]=(img[k] & (!bitParPixel)) ^ ((b >>(8-n*(i+1)))&bitParPixel);
+            img[k]=(img[k] & (~bitParPixel)) ^ ((b >>(8-n*(i+1)))&bitParPixel);
         k+=1;
         i++;
     }
@@ -44,33 +44,71 @@ int cacheunoctet( unsigned char** img, unsigned char b,int k, char bitParPixel)
 }
 
 
+/*
+ *  Fonction de test de cacheunoctet
+ * 
+ * Test le cas potentiellement pathologique du codage sur nombre de bit non multiple de 8
+ * verifie que l'indice retourné est le bon
+ * 
+ */
+
+
 void test_cacheunoctet()
 {
-    unsigned char** image_test={{0xAB,0xCD},{0xEF,0x87}};
+    unsigned char* image_test; //{0xAB,0xCD,0xEF,0x87};
+    image_test = malloc(sizeof(unsigned char)*4);
+    image_test[0] = 0xAB;
+    image_test[1]=0xCD;
+    image_test[2]=0xEF;
+    image_test[3]=0x87;
     unsigned char b = 0b10101101;
-    int k =0;
+    int k=0;
+    int testok = 1;
+    printf("\n\n");
+    printf("==========Test fonction cacheunoctet de f_encode.c========== \n");
     char bitParPixel = 3;
     k = cacheunoctet(image_test,b,k,bitParPixel);
     if(k!=3)
+    {
+        testok=0;
         printf("cacheunoctet : Erreur indice pixel\n");
+    }
     else
         printf("[OK] : indice pixel\n");
     if(image_test[0] != 0b10101101)
+    {
         printf("cacheunoctet : Erreur  information caché\n");
+        testok = 0;
+    }
     else
         printf("[OK] : premier pixel\n");
      if(image_test[1] != 0b11001011)
+     {
         printf("cacheunoctet : Erreur  information caché\n");
-    else
+        testok = 0;
+     }
+     else
         printf("[OK] : second pixel\n");
     if(image_test[2] != 0b11101010)
+    {
+        testok=0;
         printf("cacheunoctet : Erreur  information caché\n");
+    }
     else
         printf("[OK] : troisieme pixel\n");
     if(image_test[3] != 0b10000111)
+    {
+        testok=0;
         printf("cacheunoctet : Erreur  information caché\n");
+    }
     else
         printf("[OK] : dernier pixel\n");    
+    free(image_test);
+    if(testok==1)
+        printf("==============f_encode.c : cacheunoctet [OK]================\n");
+    else
+        printf("==============[ERREUR] f_encode.c : cacheunoctet================\n");
+    printf("\n");
 }
 
 /*
