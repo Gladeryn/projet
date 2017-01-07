@@ -20,16 +20,17 @@ void libere_image(unsigned char ** p_image)
 nbl : nombre de lignes de l’image à allouer
 *
 nbc : nombre de colonnes de l’image à allouer
-* RETOUR : pointeur vers l’image allouée, ou NULL en cas d’erreur
 */
-unsigned char** * alloue_image(int nbl, int nbc) 
+unsigned char**  alloue_image(int nbl, int nbc) 
 {
     unsigned char * image=calloc(nbl*nbc,sizeof(unsigned char)); //allocation d'un espace contiguë de memoire de la taille de l'image
     int i;
-    unsigned char** * ligne = calloc(nbl,nbc*sizeof(unsigned char*)); //allocation de nbl lignes
+    unsigned char** ligne = calloc(nbl,nbc*sizeof(unsigned char*)); //allocation de nbl lignes
     for(i=0;i<nbl;i++)
     {
-       * ligne[i] = &image[i*nbc]; 
+       ligne[i] = &(image[i*nbc]); 
     }
+    
+    
     return(ligne);
 }
