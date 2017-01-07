@@ -50,6 +50,7 @@ int cacheunoctet( unsigned char** img, unsigned char b,int k, char bitParPixel)
  * 
  * Test le cas potentiellement pathologique du codage sur nombre de bit non multiple de 8
  * verifie que l'indice retourné est le bon
+ * verifie que la valeur des pixels apres les avoir caché est celleprévue
  * 
  */
 
@@ -142,10 +143,8 @@ int imencode(char *fic, unsigned char**img, char bitParPixel, int nl, int nc)
         return -1;
     }
     
-    fseek(fichier,0,SEEK_END); //on se place à la fin du fichier
-    taille = ftell(fichier); // on lit la position du curseur placé à la fin du fichier, c'est sa taille en octets
+    taille = strlen(fic); // on lit la position du curseur placé à la fin du fichier, c'est sa taille en octets
     taille = taille + 12 + 4; // la taille totale à cacher en octets
-    
     if(taille/((float)bitParPixel) > taille/bitParPixel) // taille devient la taille nécessaire en pixel
         taille = taille/bitParPixel +1;
     else
@@ -168,20 +167,92 @@ int imencode(char *fic, unsigned char**img, char bitParPixel, int nl, int nc)
     
     for(i=0;i<strlen(fic);i++)
     {
-         cacheunoctet(img,(unsigned char)fic[i],k,bitParPixel);
-         k++;
+         k=cacheunoctet(img,(unsigned char)fic[i],k,bitParPixel);
     }
-    cacheunoctet(img,(unsigned char)('\0'),k,bitParPixel); 
-    k=11; //les 12 premiers pixels sont reservés au titre du fichier
+    cacheunoctet(img,(unsigned char)('\0'),k,bitParPixel); //Le dernier caractere caché est le /0
+    k=12; //les 12 premiers pixels sont reservés au titre du fichier
     
-    unsigned int len_message = ftell(fichier);
-    if(len_message>=4294967296) // valeur maximale codée sur 32 bits (il faudrait déja un fichier de plus de 4GiO donc une image d'au moins cette taille). Le = sert a considerer le message comme trop long si est d'exactement la valeur maximale possible, car de toute manière un unsigned int ne peut pas prendre de valeur plus grande. On s'assure ainsi qu'aucune information incomplète ne puisse etre encodée dans l'image. Sinon il faudrait prendre des uint64. 
+    unsigned int len_message = strlen(fic);
+    if(len_message>=4294967295) // valeur maximale codée sur 32 bits (il faudrait déja un fichier de plus de 4GiO donc une image d'au moins cette taille). Le = sert a considerer le message comme trop long si est d'exactement la valeur maximale possible, car de toute manière un unsigned int ne peut pas prendre de valeur plus grande. On s'assure ainsi qu'aucune information incomplète ne puisse etre encodée dans l'image. Sinon il faudrait prendre des uint64. 
     {
         printf("Taille message trop grande ou image trop petite\n");
         return-1;
     }
     
-    // a continuer : Encoder taille message et message
+    k=cacheunoctet(img,(unsigned char)(len_message & 0xFF000000),k,bitParPixel);//cache le premier octet de la taille
+    k=cacheunoctet(img,(unsigned char)(len_message & 0x00FF0000),k,bitParPixel);//Le deuxieme
+    k=cacheunoctet(img,(unsigned char)(len_message & 0x0000FF00),k,bitParPixel);//troisieme
+    k=cacheunoctet(img,(unsigned char)(len_message & 0x000000FF),k,bitParPixel);//quatrieme
+    
+    if(k != 16) //petit test interne
+    {
+        printf("Une erreur est survenue lors de l'encodage de la taille du message\n");
+        return -1;
+    }
+      
+    char octet;
+    while(fread(&octet,1,1,fichier)!=0)
+    {
+        k=cacheunoctet(img,octet,k,bitParPixel);
+    }
     
     fclose(fichier);
+}
+
+
+
+/*
+ * fonction de test de imencode
+ * 
+ * crée un fichier et une image, et verifie qu'apres encodage la valeur des pixels est la bonne
+ */
+void test_imencode()
+{
+    FILE* fichier=NULL;
+    char* fic ="a.txt"; 
+    if((fichier = fopen(fic,"wb"))==NULL)
+       exit(-1);
+    unsigned char message[7] = "banana";
+    fprintf(fichier,"%s\n",message);
+    fclose(fichier);
+    fichier = NULL;
+    if((fichier = fopen(fic,"rb"))==NULL)
+       exit(-1);
+    unsigned char* img = calloc(25,sizeof(unsigned char));
+    imencode(fic,&img,8,25,1);
+    int test = 0;
+    printf("\n");
+    printf("==============Test fonction imencode de f_encode.c==============\n");
+    if(img[0] != 'a' || img[1] != '.' || img[2]!='t' || img[3]!='x' || img[4]!='t' || img[5] != '\0' || img[5] != 0x00 || img[6]!=0x00|| img[7]!=0x00|| img[8]!=0x00|| img[9]!=0x00|| img[10]!=0x00|| img[11]!=0x00)
+    {
+        printf("imencode : erreur encodage titre\n");
+        test=1;
+    }
+    
+    else
+        printf("[OK] : nom fichier caché\n");
+    
+    if(img[12] != 0x00 || img[13] != 0x00 || img[14] != 0x00 || img[15] != 0x05)
+    {
+        test = 1;
+        printf("imencode : erreur encodage taille message\n");
+    }
+    else
+        printf("[OK] : taille message caché\n");
+    
+    if(img[16]!='b' ||img[17]!='a' ||img[18]!='n' ||img[19]!='a' ||img[20]!='n' ||img[21]!='a' )
+    {
+        printf("imencode : erreur encodage message\n");
+        test = 1;
+    }
+    else
+        printf("[OK] : message caché\n");
+    
+    if(test==1)
+        printf("==============[ERREUR] f_encode.c : imencode==============\n\n");
+    else
+        printf("==============f_encode.c : imencode [OK]==============\n\n");
+    
+    fclose(fichier);
+    remove(fic);
 }
