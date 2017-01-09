@@ -47,6 +47,7 @@ int main(int argc, char** argv)
             image_copie[i][j] = image[i][j];
         }
     }
+    
     libere_image(image);
    
     
@@ -55,7 +56,10 @@ int main(int argc, char** argv)
         printf("Une erreur est survenue lors de l'encodage\n");
         return -1;
     }
+    
     ecritureimagepgm2(argv[3],image_copie,pnl,pnc);
+
+    libere_image(image_copie);
 }
 
 

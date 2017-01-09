@@ -140,6 +140,8 @@ void test_cacheunoctet()
     }
     else
         printf("[OK] : dernier pixel\n");    
+    free(image_test2);
+    free(image_test1);
     free(image_test);
     if(testok==1)
         printf("==============f_encode.c : cacheunoctet [OK]================\n");
@@ -241,6 +243,10 @@ int imencode(char *fic, unsigned char**img, char bitParPixel, int nl, int nc)
     
     fclose(fichier);
 }
+
+/*
+ * affiche l'image sur le terminal, ne sert que pourle debugage 
+ */
 
 void affiche( unsigned char** im, int nl, int nc) { 
     

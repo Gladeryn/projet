@@ -8,6 +8,7 @@ p_image : l’image à libérer
 */
 void libere_image(unsigned char ** p_image) 
 {
+        free(*p_image);
         free(p_image);
 }
 
@@ -25,12 +26,10 @@ unsigned char**  alloue_image(int nbl, int nbc)
 {
     unsigned char * image=calloc(nbl*nbc,sizeof(unsigned char)); //allocation d'un espace contiguë de memoire de la taille de l'image
     int i;
-    unsigned char** ligne = calloc(nbl,nbc*sizeof(unsigned char*)); //allocation de nbl lignes
+    unsigned char** ligne = calloc(nbl,nbc*sizeof(unsigned char*)); //allocation de nbl lignes pour disposer l'image sous forme de tableau
     for(i=0;i<nbl;i++)
     {
        ligne[i] = &(image[i*nbc]); 
-    }
-    
-    
+    }        
     return(ligne);
 }
