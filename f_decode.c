@@ -42,7 +42,7 @@ unsigned char extraitnbits(int n,unsigned char  pixel)
 void test_extraitnbits()
 {
     unsigned char pixel = 0b01101010;
-    if(extraitnbits(2,pixel)!=0b01 || extraitnbits(3,pixel)!=0b011)
+    if(extraitnbits(2,pixel)!=0b10 || extraitnbits(3,pixel)!=0b010)
         printf("Erreur extraitnbits\n");
     else
         printf("Extraitnbits [OK]\n");
