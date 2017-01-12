@@ -2,13 +2,40 @@
 #include <SDL_phelma.h>
 #include "f_decode.h"
 
+
+int charintoint (char BitParPixel)
+
+{
+	int n;
+    switch(BitParPixel)
+    {
+        case '0':
+        {n=0;break;}
+        case '1':
+        {n=1;break;}
+        case '2':
+        {n=2;break;}
+        case '3':
+        {n=3;break;}
+        case '4':
+        {n=4;break;}
+        case '5':
+        {n=5;break;}
+        case '6':
+        {n=6;break;}
+        case '7':
+        {n=7;break;}
+        case '8':
+        {n=8;break;}
+        default:
+            n=8;
+	}
+	return(n);
+}
+
 int extraitnbits(int n, int pixel)
 {
-	int uselessbits = pixel/(pow2(2,n));
-	uselessbits=uselessbits*(pow2(2,n));
-	pixel = pixel - uselessbits ;
-	
-	return(pixel) ;
+	return 0xFF&(pixel>>8-n);
 }
 
 
@@ -21,10 +48,27 @@ int placenbits(int position, int bits)
 	}
 	else
 	{
-		printf("%d %d\n",bits, position);
 		return((bits<<(position))&0b11111111);
 	}
 }
+
+ 
+int extraitunoctet (unsigned char **img, int *p_k, char bitParPixel)
+
+{	
+	int n = charintoint(bitParPixel);
+	int octet_cache = 0b00000000 ;
+	int i = *p_k ;
+     
+	while (*p_k-i+1 <= 8/n)
+	{
+		octet_cache+=placenbits(n*(*p_k)-i+1,extraitnbits(n,*(*img+*p_k))) ;
+		*p_k+=1;
+	}
+	return(octet_cache);
+}
+
+
 
 /**
 * Extrait le fichier caché dans l’image « img », à raison de « bitParPixel »
@@ -58,7 +102,7 @@ int imdecode (unsigned char** img, char bitParPixel, int nl, int nc)
 	{
 		title[i] = extraitunoctet(img,&p_k,bitParPixel);
 	}
-	printf("Titre du fichier cahché :%s\n",title);
+	printf("Titre du fichier caché :%s\n",title);
 	
 	unsigned int taille;
 	taille = extraitunoctet(img,&p_k,bitParPixel)+extraitunoctet(img,&p_k,bitParPixel)+extraitunoctet(img,&p_k,bitParPixel)+extraitunoctet(img,&p_k,bitParPixel);
