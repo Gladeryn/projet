@@ -16,4 +16,4 @@ test : test.o f_encode.o f_image.o
 
 .PHONY: clean
 clean:
-	rm -rf *.o encode
+	rm -rf *.o encode 
