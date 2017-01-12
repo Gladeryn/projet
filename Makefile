@@ -8,7 +8,7 @@ encode : encode.o f_image.o f_encode.o
 decode : f_image.o f_decode.o decode.o
 	gcc -o $@ $^ $(LDFLAGS)
 all : encode decode
-test : test.o f_encode.o f_image.o 
+test : test.o f_encode.o f_decode.o f_image.o 
 	gcc -o $@ $^ $(LDFLAGS)
 
 %.o : %.c

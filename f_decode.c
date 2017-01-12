@@ -33,38 +33,54 @@ int charintoint (char BitParPixel)
 	return(n);
 }
 
-int extraitnbits(int n, int pixel)
+unsigned char extraitnbits(int n,unsigned char  pixel)
 {
-	return 0xFF&(pixel>>8-n);
+    //printf("Extract %d\n",(0xFF&(pixel<<8-n))>>8-n);
+	return ((0xFF&(pixel<<8-n))>>8-n);
+}
+
+void test_extraitnbits()
+{
+    unsigned char pixel = 0b01101010;
+    if(extraitnbits(2,pixel)!=0b01 || extraitnbits(3,pixel)!=0b011)
+        printf("Erreur extraitnbits\n");
+    else
+        printf("Extraitnbits [OK]\n");
 }
 
 
 
-int placenbits(int position, int bits)
+unsigned char placenbits(int position, unsigned char bits)
 {
 	if (position == 0)
 	{
-		printf("ERREUR DANS PLACENBITS : POSITION = 0") ;
+        //printf("--------%d\n",bits);
+		return bits;
 	}
 	else
 	{
+        
+        //printf("--------%d %d %d\n",bits,position,(bits<<(position))&0b11111111);
 		return((bits<<(position))&0b11111111);
 	}
 }
 
+
  
-int extraitunoctet (unsigned char **img, int *p_k, char bitParPixel)
+unsigned char extraitunoctet (unsigned char **img, int *p_k, char bitParPixel)
 
 {	
 	int n = charintoint(bitParPixel);
-	int octet_cache = 0b00000000 ;
-	int i = *p_k ;
+	unsigned char octet_cache = 0b00000000 ;
+	int i = 1 ;
      
-	while (*p_k-i+1 <= 8/n)
+	while (i*n <= 8)
 	{
-		octet_cache+=placenbits(n*(*p_k)-i+1,extraitnbits(n,*(*img+*p_k))) ;
+		octet_cache=octet_cache | (placenbits(8-n*(i),extraitnbits(n,*(*img+*p_k)))) ;
 		*p_k+=1;
+        i++;
 	}
+	//printf("Octet : %d\n",octet_cache);
 	return(octet_cache);
 }
 
@@ -95,7 +111,7 @@ int imdecode (unsigned char** img, char bitParPixel, int nl, int nc)
 		printf("Image trop petite\n");
 		return(-1);
 	}
-	char title[12];
+	unsigned char title[12];
 	int i;
 	int p_k=0;
 	for(i=0;i<12;i++)
@@ -104,8 +120,50 @@ int imdecode (unsigned char** img, char bitParPixel, int nl, int nc)
 	}
 	printf("Titre du fichier caché :%s\n",title);
 	
-	unsigned int taille;
-	taille = extraitunoctet(img,&p_k,bitParPixel)+extraitunoctet(img,&p_k,bitParPixel)+extraitunoctet(img,&p_k,bitParPixel)+extraitunoctet(img,&p_k,bitParPixel);
-	printf("Taille du fichier : %u\n",taille);	
+	unsigned int taille=0;
+	
+    unsigned char t1,t2,t3,t4;
+    t4 = extraitunoctet(img,&p_k,bitParPixel);
+    t3 = extraitunoctet(img,&p_k,bitParPixel);
+    t2 = extraitunoctet(img,&p_k,bitParPixel);
+    t1 = extraitunoctet(img,&p_k,bitParPixel);
+    
+    unsigned int mask;
+    
+    if(t1==0x00)
+        taille = 0;
+    else if(t2==0x00)
+        mask = 0xFF;
+    else if(t3==0x00)
+        mask = 0xFFFF;
+    else if(t4==0x00)
+        mask = 0xFFFFFF;
+    else
+        mask = 0xFFFFFFFF;
+    
+    taille =( t1&mask)|(t2&mask )|(t3&mask)|(t4&mask);
+    printf("Taille du fichier : %u\n",taille);	   
+    FILE *fichier=NULL;
+    if((fichier=fopen(title,"wb"))==NULL)
+    {
+        printf("Erreur ouverture fichier\n");
+        return -1;
+    }
+    
+    i = 0;
+    while(i<taille)
+    {
+        mask = extraitunoctet(img,&p_k,bitParPixel);//octet a ecrire (on reutilisemask pour  nepas consommer plus de memoire)
+        if(fwrite(&mask,1,1,fichier)!=1)
+        {    
+            printf("Erreur ecriture fichier\n");
+            return EXIT_FAILURE;
+        }
+        i++;
+    }
+    
+    fclose(fichier);
+    printf("Message caché écrit dans %s\n",title);
+
 	return 0;
 }
